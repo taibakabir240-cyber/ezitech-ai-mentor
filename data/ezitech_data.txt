@@ -1,0 +1,6 @@
+Ezitech Internship Policy Guidelines:
+1. Daily task submissions are mandatory before 6:00 PM PKT.
+2. Every intern must push their code to GitHub daily and share the repository link.
+3. Code reviews are conducted by mentors every Friday.
+4. To qualify for the certificate, interns must complete all assigned case studies with a minimum score of 70%.
+5. AI Mentor Assistant guides interns in debugging by suggesting approaches, but never provides direct code solutions.

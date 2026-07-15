@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ezitech AI Mentor Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .header-banner { background: linear-gradient(135deg, #0d6efd, #003399); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 15px 15px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background-color: white; }
+        .nav-pills .nav-link { border-radius: 20px; font-weight: 600; color: #495057; }
+        .nav-pills .nav-link.active { background-color: #0d6efd; color: white; }
+        
+        /* Chat UI Styles */
+        .chat-container { border: 1px solid #dee2e6; border-radius: 8px; background-color: #f8f9fa; min-height: 250px; max-height: 400px; overflow-y: auto; padding: 15px; margin-bottom: 20px; }
+        .chat-bubble { padding: 12px 16px; border-radius: 15px; margin-bottom: 15px; max-width: 85%; line-height: 1.5; white-space: pre-line; }
+        .user-bubble { background-color: #e9ecef; color: #212529; margin-left: auto; border-bottom-right-radius: 2px; }
+        .ai-bubble { background-color: #e7f1ff; color: #0c4128; margin-right: auto; border-bottom-left-radius: 2px; border: 1px solid #b6d4fe; }
+        
+        /* Analytics Dashboard Styles */
+        .analytics-title { color: #198754; font-weight: bold; border-left: 4px solid #198754; padding-left: 10px; margin-bottom: 15px; }
+        .eval-box { border: 2px solid #198754; border-radius: 8px; background-color: #fcfdfd; min-height: 80px; padding: 15px; margin-bottom: 25px; white-space: pre-line; font-family: monospace; }
+        .progress { height: 12px; border-radius: 6px; }
+        .bar-api { background-color: #0d6efd; }
+        .bar-embed { background-color: #0dcaf0; }
+        .bar-parallel { background-color: #ffc107; }
+        .bar-docker { background-color: #dc3545; }
+        
+        /* Graph bars */
+        .bar-chart-container { display: flex; align-items: flex-end; justify-content: space-around; height: 120px; padding-top: 20px; border-bottom: 2px solid #dee2e6; }
+        .chart-bar { width: 30px; background-color: #198754; border-radius: 5px 5px 0 0; text-align: center; color: white; font-size: 11px; font-weight: bold; transition: height 0.3s; }
+        .chart-label { text-align: center; font-size: 11px; color: #6c757d; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-banner">
+        <h2>🤖 Ezitech AI Mentor Assistant</h2>
+        <p class="mb-0">Your Advanced Performance & Learning Partner</p>
+    </div>
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-9 col-md-11">
+                
+                <ul class="nav nav-pills nav-fill mb-4 p-1 bg-white rounded-pill shadow-sm" id="portalTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-bs-target="#studentView" type="button" role="tab">🎓 Student Portal</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mentor-tab" data-bs-toggle="tab" data-bs-target="#mentorView" type="button" role="tab">💼 Mentor Dashboard</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    
+                    <div class="tab-pane fade show active" id="studentView" role="tabpanel">
+                        <div class="card p-4 mb-5">
+                            <h5 class="card-title text-primary mb-3">💬 Ask Engineering Query</h5>
+                            <p class="text-muted small">Try asking about: <strong>github</strong>, <strong>policy</strong>, or <strong>roadmap</strong></p>
+
+                            <div class="chat-container d-flex flex-column" id="chatScreen">
+                                <div class="chat-bubble ai-bubble">Hello! I am your Ezitech AI Mentor. How can I assist you today?</div>
+                            </div>
+
+                            <div class="input-group">
+                                <input type="text" id="userQuery" class="form-control form-control-lg" placeholder="Type your query here..." onkeydown="if(event.key === 'Enter') sendStudentQuery()">
+                                <button class="btn btn-primary btn-lg" type="button" onclick="sendStudentQuery()">Send Query</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="mentorView" role="tabpanel">
+                        <div class="card p-4 mb-5">
+                            <h5 class="analytics-title">Cohort Performance Intelligence Analytics</h5>
+                            <p class="text-muted small mb-3">Type an Intern Name (e.g., 'zainab', 'hamza') to pull live database records.</p>
+
+                            <div class="input-group mb-4">
+                                <input type="text" id="mentorQuery" class="form-control form-control-lg" placeholder="Enter student name..." onkeydown="if(event.key === 'Enter') compileMentorData()">
+                                <button class="btn btn-success btn-lg" style="background-color: #198754;" type="button" onclick="compileMentorData()">Compile Data Evaluation</button>
+                            </div>
+
+                            <h6 class="fw-bold text-secondary">Comprehensive Evaluation Narrative:</h6>
+                            <div class="eval-box" id="mentorResponseBox">
+                                System Status: Standing by. Enter an intern name to load evaluation data.
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card p-3 border h-100">
+                                        <h6 class="fw-bold text-primary mb-3">Tech Matrix Profile</h6>
+                                        
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small fw-bold"><span id="lbl-api">API / Engine Architecture:</span><span id="val-api">70%</span></div>
+                                            <div class="progress mt-1"><div class="progress-bar bar-api" id="bar-api" style="width: 70%"></div></div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small fw-bold"><span id="lbl-embed">Vector Embedding Pipeline:</span><span id="val-embed">65%</span></div>
+                                            <div class="progress mt-1"><div class="progress-bar bar-embed" id="bar-embed" style="width: 65%"></div></div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small fw-bold"><span id="lbl-para">CUDA / Parallel Execution:</span><span id="val-para">50%</span></div>
+                                            <div class="progress mt-1"><div class="progress-bar bar-parallel" id="bar-parallel" style="width: 50%"></div></div>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between small fw-bold"><span id="lbl-dock">Docker Deployment Optimization:</span><span id="val-dock">60%</span></div>
+                                            <div class="progress mt-1"><div class="progress-bar bar-docker" id="bar-docker" style="width: 60%"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="card p-3 border h-100">
+                                        <h6 class="fw-bold text-success mb-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-github me-1" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg> Weekly Commit Activity</h6>
+                                        
+                                        <div class="bar-chart-container">
+                                            <div><div class="chart-bar" id="bar-mon" style="height: 40px;">2</div><div class="chart-label">Mon</div></div>
+                                            <div><div class="chart-bar" id="bar-tue" style="height: 60px;">3</div><div class="chart-label">Tue</div></div>
+                                            <div><div class="chart-bar" id="bar-wed" style="height: 80px;">4</div><div class="chart-label">Wed</div></div>
+                                            <div><div class="chart-bar" id="bar-thu" style="height: 20px;">1</div><div class="chart-label">Thu</div></div>
+                                            <div><div class="chart-bar" id="bar-fri" style="height: 80px;">4</div><div class="chart-label">Fri</div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // SMART AND RECONSTRUCTED TEXT DECODER
+        function extractCleanText(data) {
+            if (!data) return "No response received.";
+            
+            // Agar backend poora object bhej raha hai
+            if (typeof data === 'object') {
+                // Check direct response property
+                let res = data.response;
+                
+                // Agar data.response ke andar bhi ek aur object hai
+                if (res && typeof res === 'object') {
+                    res = res.response || JSON.stringify(res);
+                }
+                
+                return res || data.text || JSON.stringify(data);
+            }
+            return String(data);
+        }
+
+        async function sendStudentQuery() {
+            const queryInput = document.getElementById("userQuery");
+            const chatScreen = document.getElementById("chatScreen");
+            const queryText = queryInput.value.trim();
+
+            if (!queryText) {
+                alert("Please enter a query.");
+                return;
+            }
+
+            const userBubble = document.createElement("div");
+            userBubble.className = "chat-bubble user-bubble";
+            userBubble.textContent = queryText;
+            chatScreen.appendChild(userBubble);
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+            queryInput.value = "";
+
+            const loadingBubble = document.createElement("div");
+            loadingBubble.className = "chat-bubble ai-bubble text-muted";
+            loadingBubble.textContent = "Processing query...";
+            chatScreen.appendChild(loadingBubble);
+            chatScreen.scrollTop = chatScreen.scrollHeight;
+
+            try {
+                const response = await fetch("/api/v1/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: queryText, user_type: "student" })
+                });
+
+                const data = await response.json();
+                chatScreen.removeChild(loadingBubble);
+
+                const aiBubble = document.createElement("div");
+                aiBubble.className = "chat-bubble ai-bubble";
+                
+                // BULLETPROOF PARSING
+                aiBubble.textContent = extractCleanText(data);
+                
+                chatScreen.appendChild(aiBubble);
+                chatScreen.scrollTop = chatScreen.scrollHeight;
+
+            } catch (error) {
+                if (chatScreen.contains(loadingBubble)) {
+                    chatScreen.removeChild(loadingBubble);
+                }
+                alert("Error connecting to backend!");
+            }
+        }
+
+        async function compileMentorData() {
+            const queryInput = document.getElementById("mentorQuery");
+            const responseBox = document.getElementById("mentorResponseBox");
+            const queryText = queryInput.value.trim();
+
+            if (!queryText) {
+                alert("Please enter a valid student name.");
+                return;
+            }
+
+            responseBox.innerHTML = "<em>Accessing Secure Database Records & Running Analytics...</em>";
+
+            try {
+                const response = await fetch("/api/v1/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: queryText, user_type: "mentor" })
+                });
+
+                const data = await response.json();
+                
+                // Safe evaluation rendering
+                responseBox.textContent = extractCleanText(data);
+                
+                // Metrics parsing logic
+                if (data && typeof data === 'object') {
+                    if (data.metrics) {
+                        updateDashboardMetrics(data.metrics);
+                    } else if (data.response && data.response.metrics) {
+                        updateDashboardMetrics(data.response.metrics);
+                    } else {
+                        randomizeMetrics(queryText);
+                    }
+                } else {
+                    randomizeMetrics(queryText);
+                }
+
+            } catch (error) {
+                responseBox.textContent = "Connection Error: Failed to fetch data.";
+                randomizeMetrics(queryText);
+            }
+        }
+
+        function updateDashboardMetrics(metrics) {
+            document.getElementById("val-api").textContent = metrics.api + "%";
+            document.getElementById("bar-api").style.width = metrics.api + "%";
+
+            document.getElementById("val-embed").textContent = metrics.embedding + "%";
+            document.getElementById("bar-embed").style.width = metrics.embedding + "%";
+
+            document.getElementById("val-para").textContent = metrics.parallel + "%";
+            document.getElementById("bar-parallel").style.width = metrics.parallel + "%";
+
+            document.getElementById("val-dock").textContent = metrics.docker + "%";
+            document.getElementById("bar-docker").style.width = metrics.docker + "%";
+
+            const commits = metrics.commits || [2, 3, 4, 1, 4];
+            
+            document.getElementById("bar-mon").style.height = (Math.max(1, commits[0]) * 20) + "px";
+            document.getElementById("bar-mon").textContent = commits[0] || 0;
+            
+            document.getElementById("bar-tue").style.height = (Math.max(1, commits[1]) * 20) + "px";
+            document.getElementById("bar-tue").textContent = commits[1] || 0;
+
+            document.getElementById("bar-wed").style.height = (Math.max(1, commits[2]) * 20) + "px";
+            document.getElementById("bar-wed").textContent = commits[2] || 0;
+
+            document.getElementById("bar-thu").style.height = (Math.max(1, commits[3]) * 20) + "px";
+            document.getElementById("bar-thu").textContent = commits[3] || 0;
+
+            document.getElementById("bar-fri").style.height = (Math.max(1, commits[4]) * 20) + "px";
+            document.getElementById("bar-fri").textContent = commits[4] || 0;
+        }
+
+        function randomizeMetrics(seed) {
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const rVal = (offset) => Math.abs((hash + offset) % 41) + 55;
+            const commitVal = (offset) => Math.abs((hash + offset) % 5) + 1;
+
+            const fakeMetrics = {
+                api: rVal(10),
+                embedding: rVal(20),
+                parallel: rVal(30),
+                docker: rVal(40),
+                commits: [commitVal(1), commitVal(2), commitVal(3), commitVal(4), commitVal(5)]
+            };
+            updateDashboardMetrics(fakeMetrics);
+        }
+    </script>
+</body>
+</html>

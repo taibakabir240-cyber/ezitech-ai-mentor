@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Aqsa",
+    "performance": "Excellent",
+    "tasks_completed": "85%",
+    "github_activity": "Active (14 commits this week)",
+    "skill_gap": "Advanced RAG Pipeline Optimization",
+    "recommended_milestone": "Case Study AI-004 (Vector Index Tuning)"
+  },
+  {
+    "name": "Taiba",
+    "performance": "Good",
+    "tasks_completed": "78%",
+    "github_activity": "Active (9 commits this week)",
+    "skill_gap": "Asynchronous Error Handling in FastAPI",
+    "recommended_milestone": "Advanced Prompt Engineering Frameworks"
+  },
+  {
+    "name": "Zainab",
+    "performance": "Needs Review",
+    "tasks_completed": "61%",
+    "github_activity": "Low Activity (2 commits this week)",
+    "skill_gap": "Docker Containerization & Multi-stage Builds",
+    "recommended_milestone": "Baseline Python Microservices Review"
+  },
+  {
+    "name": "Ali",
+    "performance": "Average",
+    "tasks_completed": "72%",
+    "github_activity": "Moderate (6 commits this week)",
+    "skill_gap": "Vector DB Query Optimization (FAISS/Chroma)",
+    "recommended_milestone": "Case Study AI-003 Architecture Validation"
+  },
+  {
+    "name": "Hamza",
+    "performance": "Needs Review",
+    "tasks_completed": "55%",
+    "github_activity": "Critical (0 commits in last 72 hours)",
+    "skill_gap": "API Rate Limiting & Authentication Handlers",
+    "recommended_milestone": "Debugging Bootcamp Strategy Segment"
+  }
+]
