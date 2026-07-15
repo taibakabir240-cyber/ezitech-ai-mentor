@@ -10,37 +10,54 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 else:
-    print("WARNING: Gemini API Key not found! Please check your .env file.")
+    print("WARNING: Gemini API Key not found! Please check your .env file or Vercel dashboard.")
 
-DATA_PATH = "C:/ezitech_project/data/ezitech_data.txt"
+# --- DYNAMIC AND SAFE PATH RESOLUTION ---
+# Dynamic path extraction taake local machine aur Vercel dono par path automatic build ho
+current_file_path = os.path.abspath(__file__) # app/services/agent_service.py
+services_dir = os.path.dirname(current_file_path) # app/services
+app_dir = os.path.dirname(services_dir) # app
+BASE_DIR = os.path.dirname(app_dir) # Project Root (C:/ezitech_project)
+
+# Dono potential locations ko check karega
+DATA_PATH_1 = os.path.join(app_dir, "data", "ezitech_data.txt")
+DATA_PATH_2 = os.path.join(BASE_DIR, "data", "ezitech_data.txt")
 
 def fetch_knowledge_base():
-    """Ezitech rules aur FAQ data read karne ke liye"""
+    """Ezitech rules aur FAQ data read karne ke liye safe file reader"""
     try:
-        if os.path.exists(DATA_PATH):
-            with open(DATA_PATH, "r", encoding="utf-8") as file:
+        if os.path.exists(DATA_PATH_1):
+            with open(DATA_PATH_1, "r", encoding="utf-8") as file:
                 return file.read()
+        elif os.path.exists(DATA_PATH_2):
+            with open(DATA_PATH_2, "r", encoding="utf-8") as file:
+                return file.read()
+        print("WARNING: ezitech_data.txt not found in configured data directories.")
         return ""
     except Exception as e:
         print(f"Error reading knowledge base: {str(e)}")
         return ""
 
-def process_rag_query(query: str):
+def process_smart_query(query: str, user_type: str = "student"):
     """
-    Real RAG Logic:
-    1. Knowledge Base se relevant context search karega.
-    2. Context aur Query ko Gemini AI ke paas bhej kar intelligent response generate karega.
+    Real RAG Logic compatible with App Dashboard schema.
     """
-    knowledge_base_content = fetch_knowledge_base()
+    query_lower = query.lower().strip().replace("'", "").replace('"', "")
     
+    if not query_lower:
+        return {
+            "response": "System Context Exception: Empty token string passed.",
+            "metrics": {"confidence": 0, "source": "Parser Exception"}
+        }
+
     # 1. Simple Keyword Search (RAG Retrieval Step)
-    # Hum knowledge base ki lines mein se query ke keywords match karte hain
+    knowledge_base_content = fetch_knowledge_base()
     relevant_context = []
+    
     if knowledge_base_content:
         lines = knowledge_base_content.split('\n')
-        keywords = query.lower().split()
+        keywords = query_lower.split()
         for line in lines:
-            # Agar query ka koi bhi ahem word line mein match ho jaye
             if any(kw in line.lower() for kw in keywords if len(kw) > 3):
                 relevant_context.append(line)
     
@@ -56,7 +73,7 @@ def process_rag_query(query: str):
         confidence_score = 80
         prompt_context = "You are an AI Mentor Assistant for Ezitech. Since this query is outside local documentation, provide a professional, helpful guidance answer."
 
-    # 3. Gemini AI se response generate karwana
+    # 3. Gemini AI Response Generation
     try:
         model = genai.GenerativeModel('gemini-pro')
         
@@ -79,17 +96,18 @@ def process_rag_query(query: str):
         
     except Exception as e:
         print(f"Gemini API Error: {str(e)}")
-        # API fail hone par aakhri fallback
-        response_text = f"I parsed your query '{query}' but encountered an issue connecting to the AI brain. Please check database/API settings."
+        response_text = f"I parsed your query '{query}' but encountered an issue connecting to the AI. Error: {str(e)}"
         match_source = "Offline Parser Fallback"
         confidence_score = 50
 
+    # Frontend expectations ke mutabiq split dictionary structure return karein
     return {
         "response": response_text,
-        "match_source": match_source,
-        "confidence_score": confidence_score
+        "metrics": {
+            "confidence": confidence_score,
+            "source": match_source
+        }
     }
 
 def get_rag_retriever():
-    """Fallback function taake crash na ho"""
     return None
