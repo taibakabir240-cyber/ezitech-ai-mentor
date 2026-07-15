@@ -5,28 +5,24 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-# Path management: Taake Vercel and Local dono paths automatic set ho jayein
-current_dir = os.path.dirname(os.path.abspath(__file__)) # app folder
-parent_dir = os.path.dirname(current_dir) # project root folder
+# Setup directories for reliable imports
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+for d in [current_dir, parent_dir]:
+    if d not in sys.path:
+        sys.path.insert(0, d)
 
-for path in [current_dir, parent_dir]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
-# 100% Safe and Crash-proof Imports
+# Try to import agent service safely
+import_error = ""
 try:
-    from app.services.agent_service import process_smart_query
-except ImportError:
+    from services.agent_service import process_smart_query
+except Exception as e:
     try:
-        from services.agent_service import process_smart_query
-    except ImportError as e:
-        # Agar dono imports fail ho jayein (taake server crash na ho)
-        print(f"CRITICAL IMPORT ERROR: {e}")
-        def process_smart_query(query, user_type="student"):
-            return {
-                "response": f"Backend Import Error: Please check directory structure. {str(e)}",
-                "metrics": {"confidence": 0, "source": "System Fallback"}
-            }
+        from app.services.agent_service import process_smart_query
+    except Exception as e2:
+        import_error = f"Primary: {str(e)} | Fallback: {str(e2)}"
+        def process_smart_query(query, user_type):
+            return {"response": f"[Fallback Error]: {import_error}", "metrics": None}
 
 app = FastAPI(title="Ezitech AI Portal")
 
@@ -38,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Correct template resolution
+# Correct path pointing directly to templates/index.html
 TEMPLATE_PATH = os.path.join(current_dir, "templates", "index.html")
 
 @app.get("/", response_class=HTMLResponse)
@@ -46,7 +42,7 @@ def render_dashboard():
     if os.path.exists(TEMPLATE_PATH):
         with open(TEMPLATE_PATH, "r", encoding="utf-8") as file:
             return HTMLResponse(content=file.read(), status_code=200)
-    return HTMLResponse(content=f"<h3>index.html not found</h3>", status_code=404)
+    return HTMLResponse(content=f"<h3>index.html not found at {TEMPLATE_PATH}</h3>", status_code=404)
 
 @app.post("/api/v1/chat")
 async def chat_endpoint(request: Request):
@@ -55,14 +51,21 @@ async def chat_endpoint(request: Request):
         query = data.get("query", "")
         user_type = data.get("user_type", "student")
         
+        # Get raw response from our service
         ai_output = process_smart_query(query, user_type)
         
+        # 100% CLEAN FORMAT GUARANTEE:
+        # Hamesha frontend ko "response" key mein direct string text bhejenge
         text_reply = ""
         metrics_reply = None
         
         if isinstance(ai_output, dict):
             text_reply = ai_output.get("response", "")
             metrics_reply = ai_output.get("metrics", None)
+            
+            # Agar kisi wajah se 'response' key ke andar bhi dictionary phansi hui hai
+            if isinstance(text_reply, dict):
+                text_reply = text_reply.get("response", str(text_reply))
         else:
             text_reply = str(ai_output)
             
@@ -71,6 +74,7 @@ async def chat_endpoint(request: Request):
             "response": text_reply,
             "metrics": metrics_reply
         })
+        
     except Exception as e:
         return JSONResponse(status_code=500, content={
             "success": False,
